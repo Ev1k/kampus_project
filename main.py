@@ -9,14 +9,14 @@ bot = telebot.TeleBot(token)
 name1 = ''  # сюда будем сохранять имя пользователя
 
 
-# @bot.message_handler(commands=['hello', 'start'])
-# def start(message):
-#     markup = types.InlineKeyboardMarkup()
-#     button1 = types.InlineKeyboardButton('go to site', url='vk.com')
-#     button2 = types.InlineKeyboardButton('изменить текст', callback_data='edit') # func='edit'
-#     button2 = types.InlineKeyboardButton('отправить сообщ', callback_data='send') # func='edit'
-#     markup.add(button1, button2)
-#     bot.send_message(message.chat.id, message.from_user.first_name, reply_markup=markup)
+@bot.message_handler(commands=['hello', 'start'])
+def start(message):
+    markup = types.InlineKeyboardMarkup()
+    button1 = types.InlineKeyboardButton('go to site', url='vk.com')
+    button2 = types.InlineKeyboardButton('изменить текст', callback_data='edit') # func='edit'
+    button2 = types.InlineKeyboardButton('отправить сообщ', callback_data='send') # func='edit'
+    markup.add(button1, button2)
+    bot.send_message(message.chat.id, message.from_user.first_name, reply_markup=markup)
 
 
 @bot.message_handler(commands=['info'])
