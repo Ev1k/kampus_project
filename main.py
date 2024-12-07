@@ -1,1 +1,1 @@
-print("fghj")
+print("ali")
