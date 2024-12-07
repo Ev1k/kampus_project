@@ -6,7 +6,8 @@ import sqlite3
 token = '7842143617:AAEHbIGBUAklNmV4S-emSTvTYIlVxaT4lJ4'  # сюда вставьте свой токен
 bot = telebot.TeleBot(token)
 
-
+right_word = "family"
+next_question = "sdfgh"
 
 @bot.message_handler(commands=['hello', 'start'])
 def start(message):
@@ -18,8 +19,19 @@ def start(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def handling_buttons(call):
-    if call.data != "start-test":
-        bot.send_message(call.message.chat.id, "yes")
+    if call.data == "start-test":
+        bot.send_message(call.message.chat.id, "Как переводится слово семья?")
+        bot.register_next_step_handler(call.message, check_answer)
+
+def check_answer(message):
+    global right_word
+    if message.text.strip().lower() == right_word:
+        bot.send_message(message.chat.id, f"Yes. That's right.{next_question}")
+        right_word = "apple"
+        bot.register_next_step_handler(message, check_answer)
+    else:
+        bot.reply_to(message, "Неверно.Попробуй еще раз.")
+        bot.register_next_step_handler(message, check_answer)
 
 
 
