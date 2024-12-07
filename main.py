@@ -18,8 +18,18 @@ def start(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def handling_buttons(call):
-    if call.data != "start-test":
+    if call.data == "start-test":
         bot.send_message(call.message.chat.id, "yes")
+    if call.data == "show_translation":
+        bot.send_message(call.message.chat.id, "Введите слово и я переведу его на иностранный язык и также покажу транскрипцию")
+        bot.register_next_step_handler(call.message, translate)
+
+
+def translate(message):
+    word = message.text.strip().capitalize()
+    translation="hj"
+    transcription="fghjk"
+    bot.send_message(message.chat.id, f"перевод: {translation}, {transcription}")
 
 
 
