@@ -23,6 +23,9 @@ def handling_buttons(call):
     if call.data == "start-test":
         bot.send_message(call.message.chat.id, "Как переводится слово семья?")
         bot.register_next_step_handler(call.message, check_answer)
+    if call.data == "show_translation":
+        bot.send_message(call.message.chat.id, "Показать перевод слова?")
+        bot.register_next_step_handler(call.message, translate)
 
 def check_answer(message):
     global right_word, correct_answers
@@ -39,6 +42,13 @@ def check_answer(message):
         bot.register_next_step_handler(message, check_answer)
         if correct_answers == 5:
             bot.send_message(message.chat.id, "Вы завершили тест")
+
+def translate(message):
+    global right_word, correct_answers
+    if message.text.strip().lower() == right_word:
+        bot.send_message(message.chat.id, "family")
+
+
 
 
 
