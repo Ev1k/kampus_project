@@ -59,25 +59,37 @@ def create_db():
     cur.close()  # закрываем курсор
     conn.close()  # закрываем соединение
     insert_into_words()
+    insert_into_questions()
 
 
 def get_question():
     conn = sqlite3.connect('database.sql')
     cursor = conn.cursor()
-    cursor.execute("SELECT question, answer, wrong_answers FROM questions ORDER BY RANDOM() LIMIT 1")
+    cursor.execute("SELECT question, answer FROM questions ORDER BY RANDOM() LIMIT 1")
     question_data = cursor.fetchone()
+    cursor.execute("SELECT answer FROM questions ORDER BY RANDOM() LIMIT 2")
+    wrong_quest = cursor.fetchall()
     conn.close()
-    return question_data
+    return question_data, wrong_quest
 
+
+def get_word():
+    conn = sqlite3.connect('database.sql')
+    cursor = conn.cursor()
+    cursor.execute("SELECT en_word, ru_word, transcription FROM words ORDER BY RANDOM() LIMIT 1")
+    word_data = cursor.fetchone()
+    conn.close()
+    return word_data
 
 
 def insert_into_words():
     conn = sqlite3.connect('database.sql')
     cur = conn.cursor()
     words = [("Apple", "Яблоко", "[æpl]"), ("School", "Школа", "[skuːl]") , ("Teacher", "Учитель", " [ˈtiːtʃə(r)]"),
-             ("Sentence", "Предложение", "[ˈsentəns]"), ("Math", "Математика", "[mæθ]") , ("Weather", "Погода", "[ˈweðə]")]
+             ("Sentence", "Предложение", "[ˈsentəns]"), ("Math", "Математика", "[mæθ]") , ("Weather", "Погода", "[ˈweðə]"),
+             ("Sun", "Солнце", "[sʌn]"), ("Rain", "Дождь", "[reɪn]"), ("Meat", "Мясо", "[miːt]"),
+             ("Fire", "Огонь", "[ˈfaɪər]"), ("Water", "Вода", "[ˈwɔːtər]"), ("Poison", "Яд", "[ˈpɔɪzn]")]
     for word in words:
-        conn = sqlite3.connect('database.sql')  # открываем подключение к БД
         cur.execute("INSERT INTO words (en_word, ru_word, transcription) VALUES ('%s','%s','%s')" % (word[0], word[1], word[2]))
         conn.commit()
     cur.close()  # закрываем курсор
@@ -88,10 +100,11 @@ def insert_into_words():
 def insert_into_questions():
     conn = sqlite3.connect('database.sql')
     cur = conn.cursor()
-    questions = [("Перевод слова яблоко на английском?", "Apple"), ("Погода на английском - это ...?", "Weather"), ("По-английски учитель будет ...?", "Teacher"), ("Перевод слова школа на английском? ", "School"), ("По-английски математика - это ...?", "Math"), ("Слово предложение на английском переводится как ...?", "Sentence")]
+    questions = [("Перевод слова яблоко на английском?", "Apple"), ("Погода на английском - это ...?", "Weather"),
+                 ("По-английски учитель будет ...?", "Teacher"), ("Перевод слова школа на английском? ", "School")]
     for question in questions:
         cur.execute(
-            "INSERT INTO questions (question, answer) VALUES ('%s','%s')", (question[0], question[1]))
+            "INSERT INTO questions (question, answer) VALUES ('%s','%s')" % (question[0], question[1]))
         conn.commit()
     cur.close()
     conn.close()
@@ -99,5 +112,7 @@ def insert_into_questions():
 
 if __name__ == "__main__":
     create_db()
+    print(get_word())
+    print(get_question())
 
 bot.infinity_polling()
