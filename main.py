@@ -3,12 +3,12 @@ import webbrowser
 from telebot import types
 import sqlite3
 
+
 token = '7842143617:AAEHbIGBUAklNmV4S-emSTvTYIlVxaT4lJ4'  # сюда вставьте свой токен
 bot = telebot.TeleBot(token)
-
-right_word = "family"
-next_question = "sdfgh"
+question_and_answers = None
 correct_answers = 0
+right_word = None
 
 @bot.message_handler(commands=['hello', 'start'])
 def start(message):
@@ -20,22 +20,30 @@ def start(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def handling_buttons(call):
+    global question_and_answers
+    global right_word
     if call.data == "start-test":
-        bot.send_message(call.message.chat.id, "Как переводится слово семья?")
+        question_and_answers = get_question()
+        right_word = question_and_answers[0][1].lower()
+        bot.send_message(call.message.chat.id, f"{question_and_answers[0][0]}?")
         bot.register_next_step_handler(call.message, check_answer)
     if call.data == "show_translation":
-        bot.send_message(call.message.chat.id, "Показать перевод слова?")
+        right_word = get_right_word()
+        bot.send_message(call.message.chat.id, "Введите слово по-русски")
         bot.register_next_step_handler(call.message, translate)
 
 def check_answer(message):
-    global right_word, correct_answers
-    if message.text.strip().lower() == right_word:
+    global right_word,question_and_answers, correct_answers
+
+    if message.text.strip().lower() == right_word.lower():
         correct_answers +=1
         if correct_answers == 5:
             bot.send_message(message.chat.id, "Yes. That's right. Вы завершили тест")
+            correct_answers = 0
         else:
-            bot.send_message(message.chat.id, f"Yes. That's right.{next_question}")
-            right_word = "apple"
+            question_and_answers = get_question()
+            bot.send_message(message.chat.id, f"Yes. That's right.{question_and_answers[0][0]}")
+            right_word = question_and_answers[0][1].lower()
             bot.register_next_step_handler(message, check_answer)
     else:
         bot.reply_to(message, "Неверно.Попробуй еще раз.")
@@ -45,14 +53,77 @@ def check_answer(message):
 
 def translate(message):
     global right_word, correct_answers
-    if message.text.strip().lower() == right_word:
-        bot.send_message(message.chat.id, "family")
+    ru_word =  message.text.strip().capitalize()
+
+        # bot.send_message(message.chat.id, "family")
+
+
+def create_db():
+    conn = sqlite3.connect('database.sql')  # открываем подключение к БД
+    cur = conn.cursor()  # создаем курсор
+    cur.execute(
+            'CREATE TABLE IF NOT EXISTS words (id int auto_increment primary key, en_word varchar(50), ru_word varchar(50), transcription varchar(50))')
+    conn.commit()
+    cur.execute(
+            'CREATE TABLE IF NOT EXISTS questions (id int auto_increment primary key, question varchar(50), answer varchar(50))')
+    conn.commit()
+    cur.close()  # закрываем курсор
+    conn.close()  # закрываем соединение
+    insert_into_words()
+    insert_into_questions()
+
+
+def get_question():
+    conn = sqlite3.connect('database.sql')
+    cursor = conn.cursor()
+    cursor.execute("SELECT question, answer FROM questions ORDER BY RANDOM() LIMIT 1")
+    question_data = cursor.fetchone()
+    cursor.execute("SELECT answer FROM questions ORDER BY RANDOM() LIMIT 2")
+    wrong_quest = cursor.fetchall()
+    conn.close()
+    return question_data, wrong_quest
+
+
+def get_word():
+    conn = sqlite3.connect('database.sql')
+    cursor = conn.cursor()
+    cursor.execute("SELECT en_word, ru_word, transcription FROM words ORDER BY RANDOM() LIMIT 1")
+    word_data = cursor.fetchone()
+    conn.close()
+    return word_data
+
+
+def insert_into_words():
+    conn = sqlite3.connect('database.sql')
+    cur = conn.cursor()
+    words = [("Apple", "Яблоко", "[æpl]"), ("School", "Школа", "[skuːl]") , ("Teacher", "Учитель", " [ˈtiːtʃə(r)]"),
+             ("Sentence", "Предложение", "[ˈsentəns]"), ("Math", "Математика", "[mæθ]") , ("Weather", "Погода", "[ˈweðə]"),
+             ("Sun", "Солнце", "[sʌn]"), ("Rain", "Дождь", "[reɪn]"), ("Meat", "Мясо", "[miːt]"),
+             ("Fire", "Огонь", "[ˈfaɪər]"), ("Water", "Вода", "[ˈwɔːtər]"), ("Poison", "Яд", "[ˈpɔɪzn]")]
+    for word in words:
+        cur.execute("INSERT INTO words (en_word, ru_word, transcription) VALUES ('%s','%s','%s')" % (word[0], word[1], word[2]))
+        conn.commit()
+    cur.close()  # закрываем курсор
+    conn.close()  # закрываем соединение
 
 
 
+def insert_into_questions():
+    conn = sqlite3.connect('database.sql')
+    cur = conn.cursor()
+    questions = [("Перевод слова яблоко на английском?", "Apple"), ("Погода на английском - это ...?", "Weather"),
+                 ("По-английски учитель будет ...?", "Teacher"), ("Перевод слова школа на английском? ", "School")]
+    for question in questions:
+        cur.execute(
+            "INSERT INTO questions (question, answer) VALUES ('%s','%s')" % (question[0], question[1]))
+        conn.commit()
+    cur.close()
+    conn.close()
 
 
+if __name__ == "__main__":
+    create_db()
+    print(get_word())
+    print(get_question())
 
-
-# bot.polling(none_stop=True)
 bot.infinity_polling()
